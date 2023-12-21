@@ -1,7 +1,8 @@
-from sp_utils import SPUtils
-from dapper_handler_generator import DapperHandlerGenerator
-from dapper_request_generator import DapperRequestGenerator
+from dapper.sp_utils import SPUtils
+from dapper.dapper_handler_generator import DapperHandlerGenerator
+from dapper.dapper_request_generator import DapperRequestGenerator
 from typing import Dict
+
 
 class DapperGenerator:
     def __init__(self, sp_text: str):
