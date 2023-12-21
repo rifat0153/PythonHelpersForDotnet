@@ -4,12 +4,48 @@ class SPUtils:
     """
 
     @staticmethod
+    def retrive_dapper_class_name(sp_text):
+        """
+            Returns the name of the SP from the SP text.
+        """
+        # CREATE PROCEDURE [dbo].[usp_alertTriggerMapping_get_test_location] 
+        #     @trigger_id INT,
+        #     @site_name NVARCHAR(60) OUT,
+        #     @site_timezone_id VARCHAR(100) OUT,
+        #     @sensor_type_desc VARCHAR(100) OUT
+        # AS
+        # capture everything between CREATE PROCEDURE and the first @
+        text = sp_text.strip().rstrip().split("\n")[0]
+        sp_name = text[text.find("[dbo].[usp_") + len("[dbo].[usp_"):text.find("@")].strip().rstrip().lstrip()
+        return sp_name
+    
+    @staticmethod
     def retrive_sp_name(sp_text):
         """
             Returns the name of the SP from the SP text.
         """
-        sp_name = sp_text.split(" ")[2]
+        # CREATE PROCEDURE [dbo].[usp_alertTriggerMapping_get_test_location] 
+        #     @trigger_id INT,
+        #     @site_name NVARCHAR(60) OUT,
+        #     @site_timezone_id VARCHAR(100) OUT,
+        #     @sensor_type_desc VARCHAR(100) OUT
+        # AS
+        # capture everything between CREATE PROCEDURE and the first @
+        text = sp_text.strip().rstrip().split("\n")[0]
+        sp_name = text[text.find("[dbo].[usp_") + len("[dbo].[usp_"):text.find("@")].strip().rstrip().lstrip()
         return sp_name
+    
+    @staticmethod
+    def get_sp_type(sp_name: str):
+        """
+            Returns the type of the SP whether is a query or a command.
+        """
+        # look for 'get' or 'select' in the SP name
+        if "get" in sp_name or "select" in sp_name:
+            return "query"
+        else:
+            return "command"
+
 
     @staticmethod
     def snake_case_to_camel_case(snake_case):
