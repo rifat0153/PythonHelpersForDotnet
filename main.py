@@ -18,7 +18,11 @@ AS
 """
 
 
+# dapper_generator = DapperGenerator(sp_query)
 dapper_generator = DapperGenerator(sp_command)
 
 request_class = dapper_generator.generate_request_class()
 print(request_class)
+
+handler_class = dapper_generator.generate_handler_class()
+print(handler_class)

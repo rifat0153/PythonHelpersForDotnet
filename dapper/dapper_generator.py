@@ -12,3 +12,6 @@ class DapperGenerator:
 
     def generate_request_class(self):
         return DapperRequestGenerator.generate(self.sp_name, self.sp_params_dict)
+
+    def generate_handler_class(self):
+        return DapperHandlerGenerator.generate(self.sp_name, self.sp_params_dict)

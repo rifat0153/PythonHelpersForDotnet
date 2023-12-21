@@ -3,9 +3,6 @@ from dapper.sp_utils import SPUtils
 
 
 class DapperRequestGenerator:
-    def __init__(self, dapper_handler):
-        self.dapper_handler = dapper_handler
-
     def generate(sp_name: str, params_dict: Dict[str, str]) -> str:
         """
             Generates the Dapper Request from the SP params dictionary.
@@ -24,11 +21,7 @@ class DapperRequestGenerator:
                 public int AlertId { get; init; }
             }
         """
-        sp_type = SPUtils.get_sp_type(sp_name)
-        # remove news lines and spaces
-        request_name_striped = sp_name.replace("usp_", "").replace(
-            ".sql", "").strip().rstrip().lstrip()
-        request_name = f"{SPUtils.snake_case_to_camel_case(request_name_striped)}{sp_type.capitalize()}"
+        request_name = SPUtils.request_class_name(sp_name)
 
         request_params = []
         for param_key, param_value in params_dict.items():
