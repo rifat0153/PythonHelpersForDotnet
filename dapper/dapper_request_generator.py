@@ -1,9 +1,13 @@
 from typing import Dict, Any
 from dapper.sp_utils import SPUtils
+from dapper.stored_procedure import StoredProcedure
 
 
 class DapperRequestGenerator:
-    def generate(sp_name: str, params_dict: Dict[str, str]) -> str:
+    def __init__(self, sp: StoredProcedure):
+        self.sp = sp
+
+    def generate(self) -> str:
         """
             Generates the Dapper Request from the SP params dictionary.
             Example:
@@ -21,10 +25,10 @@ class DapperRequestGenerator:
                 public int AlertId { get; init; }
             }
         """
-        request_name = SPUtils.request_class_name(sp_name)
+        request_name = self.sp.request_class_name()
 
         request_params = []
-        for param_key, param_value in params_dict.items():
+        for param_key, param_value in self.sp.sp_params_dict.items():
             if param_value["direction"] != "OUT":
                 request_params.append(
                     f"public {param_value['csharp_type']} {param_value['camel_case_name']} {{ get; init; }}")

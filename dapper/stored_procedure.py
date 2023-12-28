@@ -9,6 +9,32 @@ class StoredProcedure:
         self.sp_name = self.retrive_sp_name()
         self.sp_params_dict = self.retrive_sp_params()
 
+    def handler_class_name(self) -> str:
+        """
+            Returns the name of the handler class.
+        """
+        sp_type = self.get_sp_type()
+        handler_name = f"{SPUtils.snake_case_to_camel_case(self.sp_name)}{sp_type.capitalize()}Handler"
+        return handler_name
+
+    def request_class_name(self) -> str:
+        """
+            Returns the name of the request class.
+        """
+        sp_type = self.get_sp_type()
+        handler_name = f"{SPUtils.snake_case_to_camel_case(self.sp_name)}{sp_type.capitalize()}"
+        return handler_name
+
+    def get_sp_type(self):
+        """
+            Returns the type of the SP whether is a query or a command.
+        """
+        # look for 'get' or 'select' in the SP name
+        if "get" in self.sp_name or "select" in self.sp_name:
+            return "query"
+        else:
+            return "command"
+
     def has_return_type(self) -> bool:
         """
             Returns True if the SP has a return type.
@@ -53,7 +79,7 @@ class StoredProcedure:
 
         return ""
 
-    def retrive_sp_name(self):
+    def retrive_sp_name(self) -> str:
         """
             Returns the name of the SP from the SP text.
 
@@ -115,3 +141,32 @@ class StoredProcedure:
                 "direction": param_direction
             }
         return params
+
+    def retrive_dynamic_params_section(self):
+        """
+            Returns the dynamic params section of the handler.
+            Example:
+
+            For the following SP:
+
+            CREATE PROCEDURE [dbo].[usp_alert_acknowledge_alert]
+                @alert_id INT,
+                @user_id INT
+            AS
+
+            The following dynamic params section will be generated:
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@user_id", request.UserId, DbType.Int32);
+            parameters.Add("@alert_id", request.AlertId, DbType.Int32);
+        """
+
+        dynamic_params = []
+        for param_key, param_value in self.sp_params_dict.items():
+            if param_value["direction"] != "OUT":
+                dynamic_params.append(
+                    f"\tparameters.Add(\"@{param_value['name']}\", request.{param_value['camel_case_name']}, {param_value['sql_db_type']});")
+        dynamic_params_str = "var parameters = new DynamicParameters(); \n    "
+        dynamic_params_str = dynamic_params_str + \
+            "\n".join(dynamic_params)
+        return dynamic_params_str
