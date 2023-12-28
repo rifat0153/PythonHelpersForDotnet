@@ -40,22 +40,20 @@ class StoredProcedure:
             Returns True if the SP has a return type.
         """
         # A SP has a return type if:
-        # it has a RETURN statement.
-        # or if it has OUT parameters.
-        # or if it has a SELECT statement. The select has to be the first statement After Begin.
+        # its name contains 'get' or 'retrieve'
+        # or it has a RETURN statement.
+        # or it has OUT or OUTPUT parameters.
 
-        # check if SP has select statement after BEGIN
-        text_after_begin = self.sp_text[self.sp_text.find(
-            "BEGIN") + len("BEGIN"):].strip().rstrip().lstrip()
-        if text_after_begin.startswith("SELECT"):
+        # check if SP name contains 'get' or 'retrieve'
+        if re.search(r'\b(get|retrieve)\b', self.sp_name, re.IGNORECASE):
             return True
 
         # check if SP has RETURN statement
-        if "RETURN" in self.sp_text:
+        if re.search(r'\bRETURN\b', self.sp_text, re.IGNORECASE):
             return True
 
-        # check if SP has OUT parameters
-        if "OUTPUT" in self.sp_text:
+        # check if SP has OUT or OUTPUT parameters
+        if re.search(r'\b(OUT|OUTPUT)\b', self.sp_text, re.IGNORECASE):
             return True
 
         return False
