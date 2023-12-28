@@ -49,7 +49,3 @@ print(request_class)
 
 handler_class = dapper_generator.generate_handler_class()
 print(handler_class)
-
-
-rtg = DapperReturnTypeGenerator(sp_command)
-print(rtg.generate_return_type())

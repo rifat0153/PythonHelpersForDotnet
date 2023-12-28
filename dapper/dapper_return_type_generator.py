@@ -3,8 +3,8 @@ from dapper.stored_procedure import StoredProcedure
 
 
 class DapperReturnTypeGenerator:
-    def __init__(self, sp_text: str):
-        self.sp_text = sp_text
+    def __init__(self, sp: StoredProcedure):
+        self.sp = sp
 
     # return a tuple with name of the return type and the return type class definition if it has one.
     def generate_return_type(self) -> tuple[str, str | None]:
@@ -17,14 +17,17 @@ class DapperReturnTypeGenerator:
             This method will return a tuple with name of the return type and the return type class definition if it has one.
             Unit will return Result<Unit> with no class definition.
         """
-        sp = StoredProcedure(self.sp_text)
+        sp = self.sp
 
         sp_has_return_type = sp.has_return_type()
+
+        # if SP has no return type, then return Result<Unit>
         if not sp_has_return_type:
-            return "Result<Unit>"
+            return "Result<Unit>", None
 
         sp_definition = sp.sp_definition
         sp_params_dict = sp.sp_params_dict
         sp_name = sp.sp_name
 
         # check if SP has select statement after BEGIN
+        return "Test", "Test"

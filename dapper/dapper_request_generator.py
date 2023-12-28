@@ -1,10 +1,12 @@
 from typing import Dict, Any
+from dapper.dapper_return_type_generator import DapperReturnTypeGenerator
 from dapper.stored_procedure import StoredProcedure
 
 
 class DapperRequestGenerator:
     def __init__(self, sp: StoredProcedure):
         self.sp = sp
+        self.return_type_generator = DapperReturnTypeGenerator(sp)
 
     def generate(self) -> str:
         """
@@ -24,6 +26,9 @@ class DapperRequestGenerator:
                 public int AlertId { get; init; }
             }
         """
+
+        request_return_type_name, request_return_type = self.return_type_generator.generate_return_type()
+
         request_name = self.sp.request_class_name()
         sp_params_dict = self.sp.sp_params_dict
         request_params = []
@@ -34,6 +39,6 @@ class DapperRequestGenerator:
                     f"public {param_value['csharp_type']} {param_value['camel_case_name']} {{ get; init; }}")
 
         request_params_str = "\n    ".join(request_params)
-        request = f"public record {request_name} : IRequest<Result<Unit>>\n{{\n    {request_params_str}\n}}"
+        request = f"public record {request_name} : IRequest<{request_return_type_name}>\n{{\n    {request_params_str}\n}}"
 
         return request
