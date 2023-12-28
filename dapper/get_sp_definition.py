@@ -1,20 +1,21 @@
 import re
 
 
-def extract_stored_procedure(sql_script):
+import re
+
+def extract_stored_procedure_definition(sql_script):
     # Define the pattern to match the stored procedure definition
     pattern = re.compile(
-        r'CREATE PROCEDURE \[dbo\]\.\[([^]]+)\]\s*([\s\S]*?)\s*AS', re.IGNORECASE)
+        r'(CREATE PROCEDURE\s*[\s\S]*?\s*AS)', re.IGNORECASE)
 
     # Search for the pattern in the SQL script
     match = pattern.search(sql_script)
 
     if match:
-        procedure_name = match.group(1)
-        procedure_definition = match.group(2)
-        return procedure_name, procedure_definition.strip()
+        procedure_definition = match.group(1)
+        return procedure_definition.strip()
 
-    return None, None
+    return None
 
 
 # Example usage:
@@ -49,10 +50,6 @@ END
 GO
 """
 
-procedure_name, procedure_definition = extract_stored_procedure(sql_script)
+sp_text = extract_stored_procedure_definition(sql_script)
 
-if procedure_name and procedure_definition:
-    print(f"Procedure Name: {procedure_name}")
-    print(f"Procedure Definition:\n{procedure_definition}")
-else:
-    print("Stored procedure not found in the script.")
+print(sp_text)
