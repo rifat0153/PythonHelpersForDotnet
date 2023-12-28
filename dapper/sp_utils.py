@@ -32,6 +32,7 @@ class SPUtils:
         #     @sensor_type_desc VARCHAR(100) OUT
         # AS
         # capture everything between CREATE PROCEDURE and the first @
+        # will return alertTriggerMapping_get_test_location
         text = sp_text.strip().rstrip().split("\n")[0]
         sp_name = text[text.find(
             "[dbo].[usp_") + len("[dbo].[usp_"):text.find("@")].strip().rstrip().lstrip()
@@ -95,12 +96,18 @@ class SPUtils:
 
     @staticmethod
     def handler_class_name(sp_name: str) -> str:
+        """
+            Returns the name of the handler class.
+        """
         sp_type = SPUtils.get_sp_type(sp_name)
         handler_name = f"{SPUtils.snake_case_to_camel_case(sp_name)}{sp_type.capitalize()}Handler"
         return handler_name
 
     @staticmethod
     def request_class_name(sp_name: str) -> str:
+        """
+            Returns the name of the request class.
+        """
         sp_type = SPUtils.get_sp_type(sp_name)
         handler_name = f"{SPUtils.snake_case_to_camel_case(sp_name)}{sp_type.capitalize()}"
         return handler_name

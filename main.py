@@ -1,4 +1,5 @@
 from dapper.dapper_generator import DapperGenerator
+from dapper.dapper_return_type_generator import DapperReturnTypeGenerator
 
 
 sp_query = """
@@ -11,7 +12,6 @@ AS
 
 sp_command = """
 CREATE PROCEDURE [dbo].[usp_alert_acknowledge_alert]
-    @acknowledged_at DATETIME OUTPUT,
     @user_id INT,
     @alert_id INT
 AS
@@ -26,3 +26,7 @@ print(request_class)
 
 handler_class = dapper_generator.generate_handler_class()
 print(handler_class)
+
+
+has_return_type = DapperReturnTypeGenerator.has_return_type(sp_command)
+print(has_return_type)
