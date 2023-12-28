@@ -6,8 +6,8 @@ class StoredProcedure:
     def __init__(self, text: str):
         self.sp_text = text
         self.sp_definition = self.extract_stored_procedure_definition()
-        self.sp_name = self.retrive_sp_name()
         self.sp_params_dict = self.retrive_sp_params()
+        self.sp_name = self.retrive_sp_name()
 
     def handler_class_name(self) -> str:
         """
@@ -19,7 +19,7 @@ class StoredProcedure:
 
     def request_class_name(self) -> str:
         """
-            Returns the name of the request class.
+            Returns the name of the Dapper request class. Example: AlertAcknowledgeAlertCommand : IRequest<Result<Unit>>
         """
         sp_type = self.get_sp_type()
         handler_name = f"{SPUtils.snake_case_to_camel_case(self.sp_name)}{sp_type.capitalize()}"
@@ -93,7 +93,7 @@ class StoredProcedure:
             will return alertTriggerMapping_get_test_location
         """
 
-        text = self.sp_text.strip().rstrip().split("\n")[0]
+        text = self.sp_definition.strip().rstrip().split("\n")[0]
         sp_name = text[text.find(
             "[dbo].[usp_") + len("[dbo].[usp_"):text.find("@")].strip().rstrip().lstrip()
         return sp_name
@@ -112,10 +112,13 @@ class StoredProcedure:
         """
         # split the text into lines
         lines = self.sp_definition.strip().rstrip().split("\n")
-        # remove the first and last lines
-        param_lines = lines[1:-1]
+        # remove any lines that doesn't start with @
+        param_lines = [
+            line for line in lines if line.strip().startswith("@")]
+
         # params dict with key as param name camel case and value as object with name, type and direction
         params = {}
+
         for line in param_lines:
             # remove leading and trailing spaces
             line = line.strip()

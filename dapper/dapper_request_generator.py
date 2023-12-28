@@ -1,5 +1,4 @@
 from typing import Dict, Any
-from dapper.sp_utils import SPUtils
 from dapper.stored_procedure import StoredProcedure
 
 
@@ -26,9 +25,10 @@ class DapperRequestGenerator:
             }
         """
         request_name = self.sp.request_class_name()
-
+        sp_params_dict = self.sp.sp_params_dict
         request_params = []
-        for param_key, param_value in self.sp.sp_params_dict.items():
+
+        for param_key, param_value in sp_params_dict.items():
             if param_value["direction"] != "OUT":
                 request_params.append(
                     f"public {param_value['csharp_type']} {param_value['camel_case_name']} {{ get; init; }}")

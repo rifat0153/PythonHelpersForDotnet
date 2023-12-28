@@ -20,40 +20,10 @@ class DapperHandlerGenerator:
             return self.generate_command_handler()
 
     def generate_command_handler(self) -> str:
-        # store procedure
-        # CREATE PROCEDURE [dbo].[usp_alert_acknowledge_alert]
-        #     @acknowledged_at DATETIME OUTPUT,
-        #     @user_id INT,
-        #     @alert_id INT
-        # AS
-        #
-        # Will generate the following:
-        #
-        # internal sealed class AcknowledgeAlertCommandHandler(ISqlConnectionFactory sqlConnectionFactory)
-        #     : IRequestHandler<AcknowledgeAlertCommand, Result<Unit>>
-        # {
-        #     public async Task<Result<Unit>> Handle(AcknowledgeAlertCommand request, CancellationToken cancellationToken)
-        #     {
-        #         using var connection = sqlConnectionFactory.Create();
+        """
+            Generates the Dapper Command Handler from the SP params dictionary.
+        """
 
-        #         var parameters = new DynamicParameters();
-        #         parameters.Add("@user_id", request.UserId, DbType.Int32);
-        #         parameters.Add("@alert_id", request.AlertId, DbType.Int32);
-
-        #         var command = new CommandDefinition(
-        #             "[dbo].[usp_alert_acknowledge_alert]",
-        #             parameters,
-        #             commandType: CommandType.StoredProcedure,
-        #             cancellationToken: cancellationToken
-        #         );
-
-        #         await connection.ExecuteAsync(command);
-
-        #         return Unit.Value;
-        #     }
-        # }
-
-        # get the name of the SP
         handler_name = self.sp.handler_class_name()
         dynamic_params_section = self.sp.retrive_dynamic_params_section()
 
