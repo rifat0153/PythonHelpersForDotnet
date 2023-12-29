@@ -27,7 +27,7 @@ class DapperRequestGenerator:
             }
         """
 
-        request_return_type_name, request_return_type = self.return_type_generator.generate_return_type()
+        request_return_type_name, request_return_type_class = self.return_type_generator.generate_return_type()
 
         request_name = self.sp.request_class_name()
         sp_params_dict = self.sp.sp_params_dict
@@ -39,6 +39,10 @@ class DapperRequestGenerator:
                     f"public {param_value['csharp_type']} {param_value['camel_case_name']} {{ get; init; }}")
 
         request_params_str = "\n    ".join(request_params)
-        request = f"public record {request_name} : IRequest<{request_return_type_name}>\n{{\n    {request_params_str}\n}}"
+        request = f"\npublic record {request_name} : IRequest<{request_return_type_name}>\n{{\n    {request_params_str}\n}}\n"
+
+        # if SP has a return type, then add it to the request
+        if request_return_type_class:
+            request = request + "\n\n" + request_return_type_class + "\n\n"
 
         return request

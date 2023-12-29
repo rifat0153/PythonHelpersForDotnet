@@ -53,7 +53,7 @@ class StoredProcedure:
             return True
 
         # check if SP has OUT or OUTPUT parameters
-        if re.search(r'\b(OUT|OUTPUT)\b', self.sp_text, re.IGNORECASE):
+        if re.search(r'\b(OUT|OUTPUT|INOUT)\b', self.sp_text, re.IGNORECASE):
             return True
 
         return False
@@ -119,7 +119,7 @@ class StoredProcedure:
 
         for line in param_lines:
             # remove leading and trailing spaces
-            line = line.strip()
+            line = line.strip().replace(",", "")
             # split by space
             parts = line.split(" ")
             # get the param name without @
