@@ -36,10 +36,10 @@ class DapperRequestGenerator:
         for param_key, param_value in sp_params_dict.items():
             if param_value["direction"] != "OUT":
                 request_params.append(
-                    f"public {param_value['csharp_type']} {param_value['camel_case_name']} {{ get; init; }}")
+                    f"public {param_value['csharp_type']} {param_value['pascal_case_name']} {{ get; init; }}")
 
         request_params_str = "\n    ".join(request_params)
-        request = f"\npublic record {request_name} : IRequest<{request_return_type_name}>\n{{\n    {request_params_str}\n}}\n"
+        request = f"\npublic record {request_name} : IRequest<Result<{request_return_type_name}>>\n{{\n    {request_params_str}\n}}\n"
 
         # if SP has a return type, then add it to the request
         if request_return_type_class:

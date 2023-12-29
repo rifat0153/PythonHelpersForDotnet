@@ -15,15 +15,15 @@ class DapperReturnTypeGenerator:
                 or if it has OUT parameters.
                 or if it has a SELECT statement. The select has to be the first statement After Begin.
             This method will return a tuple with name of the return type and the return type class definition if it has one.
-            Unit will return Result<Unit> with no class definition.
+            Unit will return Unit with no class definition.
         """
         sp = self.sp
 
         sp_has_return_type = sp.has_return_type()
 
-        # if SP has no return type, then return Result<Unit>
+        # if SP has no return type, then return Unit
         if not sp_has_return_type:
-            return "Result<Unit>", None
+            return "Unit", None
 
         sp_definition = sp.sp_definition
         sp_params_dict = sp.sp_params_dict
@@ -36,7 +36,7 @@ class DapperReturnTypeGenerator:
         # create a class definition for the return type with the OUT parameters
         if sp.get_sp_type() == "command":
             return_type_class_definition = self.get_command_return_type_class_definition()
-            return f"Result<{return_type_name}>", return_type_class_definition
+            return f"{return_type_name}", return_type_class_definition
 
         # if the SP is a query and has a return type, meaning it has a SELECT statement and might have OUT parameters
 
@@ -67,11 +67,11 @@ class DapperReturnTypeGenerator:
         for param_key, param_value in sp_params_dict.items():
             if param_value["direction"] == "OUTPUT" or param_value["direction"] == "INOUT" or param_value["direction"] == "OUT":
                 return_type_class_definition.append(
-                    f"public {param_value['csharp_type']} {param_value['camel_case_name']} {{ get; init; }}")
+                    f"public {param_value['csharp_type']} {param_value['pascal_case_name']} {{ get; init; }}")
 
         return_type_class_definition_str = "\n    ".join(
             return_type_class_definition)
-        return_type_class_definition = f"\npublic record {self.get_return_type_name()}Result\n{{\n    {return_type_class_definition_str}\n}}\n"
+        return_type_class_definition = f"\npublic record {self.get_return_type_name()}\n{{\n    {return_type_class_definition_str}\n}}\n"
         return return_type_class_definition
 
     def get_return_type_name(self):
@@ -79,5 +79,5 @@ class DapperReturnTypeGenerator:
             Returns the name of the return type. for sp name: usp_get_alert_acknowledge_alert, the return type name will be UspGetAlertAcknowledgeAlertResult.
         """
         sp = self.sp
-        return_type_name = f"{SPUtils.snake_case_to_camel_case(sp.sp_name)}Result"
+        return_type_name = f"{SPUtils.snake_case_to_pascal_case(sp.sp_name)}Result"
         return return_type_name

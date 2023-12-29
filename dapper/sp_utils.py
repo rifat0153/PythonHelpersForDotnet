@@ -24,12 +24,23 @@ class SPUtils:
         return sp_name
 
     @staticmethod
-    def snake_case_to_camel_case(snake_case):
+    def snake_case_to_pascal_case(snake_case):
         """
             Converts a string from snake_case to camelCase.
         """
         camel_case = ''.join(
             x.capitalize() or '_' for x in snake_case.split('_'))
+        return camel_case
+
+    @staticmethod
+    def snake_case_to_camel_case(snake_case):
+        """
+            Converts a string from snake_case to camelCase.
+        """
+        components = snake_case.split('_')
+        # We capitalize the first letter of each component except the first one
+        # with the 'title' method and join them together.
+        camel_case = components[0] + ''.join(x.title() for x in components[1:])
         return camel_case
 
     @staticmethod
@@ -49,6 +60,20 @@ class SPUtils:
         else:
             csharp_type = "string"
         return csharp_type
+
+    @staticmethod
+    def str_to_dapper_param_direction(direction: str):
+        """
+            Converts a string to a C sharp param direction
+        """
+        csharp_param_direction = ""
+        if direction == "IN":
+            csharp_param_direction = "ParameterDirection.Input"
+        elif direction == "OUT":
+            csharp_param_direction = "ParameterDirection.Output"
+        elif direction == "INOUT":
+            csharp_param_direction = "ParameterDirection.InputOutput"
+        return csharp_param_direction
 
     @staticmethod
     def str_to_sql_db_type(type: str):

@@ -14,7 +14,7 @@ class StoredProcedure:
             Returns the name of the handler class.
         """
         sp_type = self.get_sp_type()
-        handler_name = f"{SPUtils.snake_case_to_camel_case(self.sp_name)}{sp_type.capitalize()}Handler"
+        handler_name = f"{SPUtils.snake_case_to_pascal_case(self.sp_name)}{sp_type.capitalize()}Handler"
         return handler_name
 
     def request_class_name(self) -> str:
@@ -22,7 +22,7 @@ class StoredProcedure:
             Returns the name of the Dapper request class. Example: AlertAcknowledgeAlertCommand : IRequest<Result<Unit>>
         """
         sp_type = self.get_sp_type()
-        handler_name = f"{SPUtils.snake_case_to_camel_case(self.sp_name)}{sp_type.capitalize()}"
+        handler_name = f"{SPUtils.snake_case_to_pascal_case(self.sp_name)}{sp_type.capitalize()}"
         return handler_name
 
     def get_sp_type(self):
@@ -103,6 +103,7 @@ class StoredProcedure:
             Dict example:
                 "name": param_name,
                 "camel_case_name": camel_case_name,
+                "pascal_case_name": pascal_case_name,
                 "type": param_type,
                 "csharp_type": csharp_type,
                 "sql_db_type": sql_db_type,
@@ -136,11 +137,14 @@ class StoredProcedure:
             params[param_name] = {
                 "name": param_name,
                 "camel_case_name": SPUtils.snake_case_to_camel_case(param_name),
+                "pascal_case_name": SPUtils.snake_case_to_pascal_case(param_name),
                 "type": param_type,
                 "csharp_type": SPUtils.str_to_csharp_type(param_type),
                 "sql_db_type": SPUtils.str_to_sql_db_type(param_type),
-                "direction": param_direction
+                "direction": param_direction,
+                "csharp_param_direction": SPUtils.str_to_dapper_param_direction(param_direction)
             }
+
         return params
 
     def retrive_dynamic_params_section(self):
@@ -164,9 +168,8 @@ class StoredProcedure:
 
         dynamic_params = []
         for param_key, param_value in self.sp_params_dict.items():
-            if param_value["direction"] != "OUT":
-                dynamic_params.append(
-                    f"\tparameters.Add(\"@{param_value['name']}\", request.{param_value['camel_case_name']}, {param_value['sql_db_type']});")
+            dynamic_params.append(
+                f"\tparameters.Add(\"@{param_value['name']}\", request.{param_value['pascal_case_name']}, {param_value['sql_db_type']}, {param_value['csharp_param_direction']});")
         dynamic_params_str = "var parameters = new DynamicParameters(); \n    "
         dynamic_params_str = dynamic_params_str + \
             "\n".join(dynamic_params)

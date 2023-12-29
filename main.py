@@ -24,7 +24,7 @@ GO
 -- Description:	Acknowledge an alert
 -- =============================================
 CREATE PROCEDURE [dbo].[usp_alert_acknowledge_alert]
-	@user_id INT,
+	@user_id INT OUT,
 	@alert_id INT
 AS
 BEGIN
