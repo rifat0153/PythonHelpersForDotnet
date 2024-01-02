@@ -43,46 +43,6 @@ class DapperHandlerGenerator:
      
         """
 
-        # if the return type is a List<T>, then use dapper QueryAsync and return the list
-        if "List" in request_return_type_name:
-            handler = handler + f"""
-            var command = new CommandDefinition(
-            "[dbo].[{self.sp.sp_name}]",
-            parameters,
-            commandType: CommandType.StoredProcedure,
-            cancellationToken: cancellationToken
-        );
-
-        var result = await connection.QueryAsync<{request_return_type_name}>(command);
-
-        return result?.ToList() ?? new List<{request_return_type_name}>();
-    }}
-}}
-            """
-
-            return handler
-
-        # if the return type is not a List<T> and it's a query, meaning it has a single return type,
-        # then use dapper QueryFirstOrDefaultAsync and return the single object
-        if is_query:
-            handler = handler + f"""
-            var command = new CommandDefinition(
-            "[dbo].[{self.sp.sp_name}]",
-            parameters,
-            commandType: CommandType.StoredProcedure,
-            cancellationToken: cancellationToken
-        );
-
-        var result = await connection.QueryFirstOrDefaultAsync<{request_return_type_name}>(command);
-
-        return result;
-
-    }}
-}}
-            """
-
-            return handler
-
         # if the return type is a Unit, then use dapper ExecuteAsync and return Unit.Value
         if request_return_type_name == "Unit":
             handler = handler + f"""
@@ -143,39 +103,63 @@ class DapperHandlerGenerator:
 
         return handler
 
-    def generate_command_handler_old(self) -> str:
+    def generate_query_handler(self) -> str:
         """
-            Generates the Dapper Command Handler from the SP params dictionary.
+            Generates the Dapper Query Handler from the SP params dictionary.
         """
 
+        is_query = self.sp.get_sp_type() == 'query'
         handler_name = self.sp.handler_class_name()
         dynamic_params_section = self.sp.retrive_dynamic_params_section()
+        request_return_type_name, request_return_type_class = self.return_type_generator.generate_return_type()
 
         handler = f"""internal sealed class {handler_name}(ISqlConnectionFactory sqlConnectionFactory)
-    : IRequestHandler<{self.sp.request_class_name()}, Result<Unit>>
+    : IRequestHandler<{self.sp.request_class_name()}, Result<{request_return_type_name}>>
 {{
 
-    public async Task<Result<Unit>> Handle({self.sp.request_class_name()} request, CancellationToken cancellationToken)
+    public async Task<Result<{request_return_type_name}>> Handle({self.sp.request_class_name()} request, CancellationToken cancellationToken)
     {{
         using var connection = sqlConnectionFactory.Create();
 
         {dynamic_params_section}
+     
+        """
 
-        var command = new CommandDefinition(
+        # if the return type is a List<T>, then use dapper QueryAsync and return the list
+        if "List" in request_return_type_name:
+            handler = handler + f"""
+            var command = new CommandDefinition(
             "[dbo].[{self.sp.sp_name}]",
             parameters,
             commandType: CommandType.StoredProcedure,
             cancellationToken: cancellationToken
         );
 
-        await connection.ExecuteAsync(command);
+        var result = await connection.QueryAsync<{request_return_type_name}>(command);
 
-        return Unit.Value;
+        return result?.ToList() ?? new List<{request_return_type_name}>();
+    }}
+}}
+            """
+
+            return handler
+
+        # if the return type is not a List<T> and it's a query, meaning it has a single return type,
+        # then use dapper QueryFirstOrDefaultAsync and return the single object
+        handler = handler + f"""
+        var command = new CommandDefinition(
+        "[dbo].[{self.sp.sp_name}]",
+        parameters,
+        commandType: CommandType.StoredProcedure,
+        cancellationToken: cancellationToken
+    );
+
+        var result = await connection.QueryFirstOrDefaultAsync<{request_return_type_name}>(command);
+
+        return result;
+
     }}
 }}
         """
 
         return handler
-
-    def generate_query_handler(sp: StoredProcedure) -> str:
-        return "dapper_query_handler_dummy"

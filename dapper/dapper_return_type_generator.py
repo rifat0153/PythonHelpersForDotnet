@@ -52,9 +52,9 @@ class DapperReturnTypeGenerator:
 
             if has_top_1_select_statement:
                 return_type_class_definition = self.get_query_return_type_class_definition()
-                return f"Result<{return_type_name}>", return_type_class_definition
+                return f"{return_type_name}", return_type_class_definition
 
-            return f"Result<List<{return_type_name}>>", return_type_class_definition
+            return f"List<{return_type_name}>", return_type_class_definition
 
     def get_query_return_type_class_definition(self) -> str:
         """
@@ -97,7 +97,7 @@ class DapperReturnTypeGenerator:
 
             SP with SELECT statement that returns * will return a list of the SELECT statement. The class will have no fields in this case.
         """
-
+        sp_text = self.sp.sp_text
         sp_definition = self.sp.sp_definition
         sp_params_dict = self.sp.sp_params_dict
         sp_name = self.sp.sp_name
@@ -107,15 +107,19 @@ class DapperReturnTypeGenerator:
 
         # use RE to check if the SP has a SELECT statement
         select_pattern = re.compile(r'SELECT(.*?)FROM', re.DOTALL)
-        select_match = select_pattern.search(sp_definition)
+        select_match = select_pattern.search(sp_text)
 
         if select_match:
+            group = select_match.group(1)
             # Extract the column names from the SELECT statement
-            column_names = re.findall(r'(\w+)(?:,|\n)', select_match.group(1))
+            column_names = re.findall(r'\b\w+\b', group, re.IGNORECASE)
 
             # Generate the class definition
             return_type_class_definition = f"public class {return_type_name}\n{{\n"
             for column_name in column_names:
+                # Ensure the column name is a valid C# identifier
+                if column_name[0].isdigit():
+                    column_name = "_" + column_name
                 return_type_class_definition += f"\tpublic object {column_name} {{ get; set; }}\n"
             return_type_class_definition += "}"
 

@@ -45,7 +45,7 @@ class StoredProcedure:
         # or it has OUT or OUTPUT parameters.
 
         # check if SP name contains 'get' or 'retrieve'
-        if re.search(r'\b(get|retrieve)\b', self.sp_name, re.IGNORECASE):
+        if re.search(r'(get|retrieve)', self.sp_name, re.IGNORECASE):
             return True
 
         # check if SP has RETURN statement
@@ -66,7 +66,7 @@ class StoredProcedure:
         """
         # Define the pattern to match the stored procedure definition
         pattern = re.compile(
-            r'(CREATE PROCEDURE\s*[\s\S]*?\s*AS)', re.IGNORECASE)
+            r'(CREATE\s+PROCEDURE\s*[\s\S]*?\s*AS)', re.IGNORECASE)
 
         # Search for the pattern in the SQL script
         match = pattern.search(self.sp_text)
@@ -91,10 +91,17 @@ class StoredProcedure:
             will return alertTriggerMapping_get_test_location
         """
 
-        text = self.sp_definition.strip().rstrip().split("\n")[0]
-        sp_name = text[text.find(
-            "[dbo].[usp_") + len("[dbo].[usp_"):text.find("@")].strip().rstrip().lstrip()
-        return sp_name
+        # Use a regular expression to find the stored procedure name
+        match = re.search(r'usp_(.*?)\s', self.sp_definition, re.IGNORECASE)
+
+        if match:
+            # The stored procedure name is the first (and only) group in the match
+            sp_name = match.group(1)
+            # remove the square brackets
+            sp_name = sp_name.replace("[", "").replace("]", "")
+            return sp_name
+        else:
+            return None
 
     def retrive_sp_params(self) -> dict:
         """
