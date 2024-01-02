@@ -43,6 +43,46 @@ class DapperHandlerGenerator:
      
         """
 
+        # if the return type is a List<T>, then use dapper QueryAsync and return the list
+        if "List" in request_return_type_name:
+            handler = handler + f"""
+            var command = new CommandDefinition(
+            "[dbo].[{self.sp.sp_name}]",
+            parameters,
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken
+        );
+
+        var result = await connection.QueryAsync<{request_return_type_name}>(command);
+
+        return result?.ToList() ?? new List<{request_return_type_name}>();
+    }}
+}}
+            """
+
+            return handler
+
+        # if the return type is not a List<T> and it's a query, meaning it has a single return type,
+        # then use dapper QueryFirstOrDefaultAsync and return the single object
+        if is_query:
+            handler = handler + f"""
+            var command = new CommandDefinition(
+            "[dbo].[{self.sp.sp_name}]",
+            parameters,
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken
+        );
+
+        var result = await connection.QueryFirstOrDefaultAsync<{request_return_type_name}>(command);
+
+        return result;
+
+    }}
+}}
+            """
+
+            return handler
+
         # if the return type is a Unit, then use dapper ExecuteAsync and return Unit.Value
         if request_return_type_name == "Unit":
             handler = handler + f"""
@@ -62,12 +102,7 @@ class DapperHandlerGenerator:
 
             return handler
 
-        # if the return type is a List<T>, then use dapper QueryAsync and return the list
-        if "List" in request_return_type_name:
-            # TODO: handle list return type
-            return handler
-
-        # if the return type is a object and it's a command, meaning it has out parameters,
+        # if the return type is not a Unit and it's a command, meaning it has out parameters,
         # then use dapper ExecuteAsync and grab the out parameters
         if not is_query:
             handler = handler + f"""

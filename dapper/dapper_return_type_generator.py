@@ -1,3 +1,4 @@
+import re
 from dapper.sp_utils import SPUtils
 from dapper.stored_procedure import StoredProcedure
 
@@ -38,9 +39,89 @@ class DapperReturnTypeGenerator:
             return_type_class_definition = self.get_command_return_type_class_definition()
             return f"{return_type_name}", return_type_class_definition
 
-        # if the SP is a query and has a return type, meaning it has a SELECT statement and might have OUT parameters
+        else:
+            # if the SP is a query and has a return type, meaning it has a RETURN statement, then return Result<Unit>
+            # create a class definition for the return type with the OUT parameters
+            return_type_class_definition = self.get_query_return_type_class_definition()
 
-        return "Query Test", "Query Test"
+            # if the SP has a SELECT Top 1 statement, then return Result<T>
+            # Otherwise, return Result<List<T>>
+
+            has_top_1_select_statement = re.search(
+                r'SELECT TOP 1', sp_definition, re.IGNORECASE)
+
+            if has_top_1_select_statement:
+                return_type_class_definition = self.get_query_return_type_class_definition()
+                return f"Result<{return_type_name}>", return_type_class_definition
+
+            return f"Result<List<{return_type_name}>>", return_type_class_definition
+
+    def get_query_return_type_class_definition(self) -> str:
+        """
+            BEGIN
+            SELECT vwUserWithBranding.user_id,
+                vwUserWithBranding.tenant_id, 
+                vwUserWithBranding.first_name,
+                vwUserWithBranding.last_name, 
+                vwUserWithBranding.full_name,
+                vwUserWithBranding.email, 
+                vwUserWithBranding.mobile,
+                vwUserWithBranding.tenant_role_id,
+                vwUserWithBranding.is_global_admin,
+                vwUserWithBranding.permissions_last_updated,
+                vwUserWithBranding.login_url,
+                vwUserWithBranding.email_sender_name,
+                vwUserWithBranding.email_sender_email,
+                vwUserWithBranding.alert_email_footer
+            FROM vwUserWithBranding
+
+            or
+
+                IF (@site_id IS NULL AND @location_group_id IS NULL AND @location_id IS NULL AND @max_date_utc IS NULL AND @only_data_alerts = 1 AND @include_cleared_alerts = 0)
+            BEGIN
+                -- uses IX_tblAlert__K17_K3_2_6_7_8_F12
+                SELECT --DISTINCT
+                    --vwAlertLocalTime.alert_id,
+                    --vwAlertLocalTime.alert_type,
+                    vwAlertLocalTime.alert_state_id,
+                    tblAlertState.alert_state_description,
+                    vwAlertLocalTime.time_raised,
+                    vwAlertLocalTime.message,
+                    --vwAlertLocalTime.severity,
+                    vwAlertLocalTime.site_name,
+                    COALESCE(tblLocation.location_desc, '-- No mapped location --') AS location_desc,
+                    tblAlertSeverityImageUrl.image_url--,
+
+            SP with top SELECT statement will return a list of the SELECT statement.
+            SP with top SELECT statement that uses Top 1 will return a single object of the SELECT statement.
+
+            SP with SELECT statement that returns * will return a list of the SELECT statement. The class will have no fields in this case.
+        """
+
+        sp_definition = self.sp.sp_definition
+        sp_params_dict = self.sp.sp_params_dict
+        sp_name = self.sp.sp_name
+
+        # get the return type name
+        return_type_name = self.get_return_type_name()
+
+        # use RE to check if the SP has a SELECT statement
+        select_pattern = re.compile(r'SELECT(.*?)FROM', re.DOTALL)
+        select_match = select_pattern.search(sp_definition)
+
+        if select_match:
+            # Extract the column names from the SELECT statement
+            column_names = re.findall(r'(\w+)(?:,|\n)', select_match.group(1))
+
+            # Generate the class definition
+            return_type_class_definition = f"public class {return_type_name}\n{{\n"
+            for column_name in column_names:
+                return_type_class_definition += f"\tpublic object {column_name} {{ get; set; }}\n"
+            return_type_class_definition += "}"
+
+            return return_type_class_definition
+        else:
+            return None
 
     def get_command_return_type_class_definition(self) -> str:
         """
