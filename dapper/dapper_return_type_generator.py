@@ -57,46 +57,6 @@ class DapperReturnTypeGenerator:
             return f"List<{return_type_name}>", return_type_class_definition
 
     def get_query_return_type_class_definition(self) -> str:
-        """
-            BEGIN
-            SELECT vwUserWithBranding.user_id,
-                vwUserWithBranding.tenant_id, 
-                vwUserWithBranding.first_name,
-                vwUserWithBranding.last_name, 
-                vwUserWithBranding.full_name,
-                vwUserWithBranding.email, 
-                vwUserWithBranding.mobile,
-                vwUserWithBranding.tenant_role_id,
-                vwUserWithBranding.is_global_admin,
-                vwUserWithBranding.permissions_last_updated,
-                vwUserWithBranding.login_url,
-                vwUserWithBranding.email_sender_name,
-                vwUserWithBranding.email_sender_email,
-                vwUserWithBranding.alert_email_footer
-            FROM vwUserWithBranding
-
-            or
-
-                IF (@site_id IS NULL AND @location_group_id IS NULL AND @location_id IS NULL AND @max_date_utc IS NULL AND @only_data_alerts = 1 AND @include_cleared_alerts = 0)
-            BEGIN
-                -- uses IX_tblAlert__K17_K3_2_6_7_8_F12
-                SELECT --DISTINCT
-                    --vwAlertLocalTime.alert_id,
-                    --vwAlertLocalTime.alert_type,
-                    vwAlertLocalTime.alert_state_id,
-                    tblAlertState.alert_state_description,
-                    vwAlertLocalTime.time_raised,
-                    vwAlertLocalTime.message,
-                    --vwAlertLocalTime.severity,
-                    vwAlertLocalTime.site_name,
-                    COALESCE(tblLocation.location_desc, '-- No mapped location --') AS location_desc,
-                    tblAlertSeverityImageUrl.image_url--,
-
-            SP with top SELECT statement will return a list of the SELECT statement.
-            SP with top SELECT statement that uses Top 1 will return a single object of the SELECT statement.
-
-            SP with SELECT statement that returns * will return a list of the SELECT statement. The class will have no fields in this case.
-        """
         sp_text = self.sp.sp_text
         sp_definition = self.sp.sp_definition
         sp_params_dict = self.sp.sp_params_dict
@@ -105,27 +65,98 @@ class DapperReturnTypeGenerator:
         # get the return type name
         return_type_name = self.get_return_type_name()
 
-        # use RE to check if the SP has a SELECT statement
-        select_pattern = re.compile(r'SELECT(.*?)FROM', re.DOTALL)
-        select_match = select_pattern.search(sp_text)
+        # Extract the part of the stored procedure after AS BEGIN
+        match = re.search(r'AS\s+BEGIN(.*)', sp_text,
+                          re.DOTALL | re.IGNORECASE)
+        if match:
+            sp_text_after_as_begin = match.group(1)
 
-        if select_match:
-            group = select_match.group(1)
-            # Extract the column names from the SELECT statement
-            column_names = re.findall(r'\b\w+\b', group, re.IGNORECASE)
+            # There can be multiple SELECT statements in the SP. We only want the first one.
+            # if the 1st SELECT statement returns *, then return an empty class definition
+            has_select_star_statement = re.search(
+                r'SELECT\s+\*\s+FROM', sp_text_after_as_begin, re.IGNORECASE)
 
-            # Generate the class definition
-            return_type_class_definition = f"public class {return_type_name}\n{{\n"
-            for column_name in column_names:
-                # Ensure the column name is a valid C# identifier
-                if column_name[0].isdigit():
-                    column_name = "_" + column_name
-                return_type_class_definition += f"\tpublic object {column_name} {{ get; set; }}\n"
-            return_type_class_definition += "}"
+        if has_select_star_statement:
+            return f"public class {return_type_name}\n{{\n}}"
 
-            return return_type_class_definition
+        # Find the position of the first SELECT after the CREATE PROCEDURE section
+        create_proc_end = re.search(r'\bAS\b', sp_text, re.IGNORECASE).end()
+        select_match = re.search(
+            r'SELECT\s(.*?)\s+FROM', sp_text[create_proc_end:], re.DOTALL | re.IGNORECASE)
+
+        if not select_match:
+            return f"public class {return_type_name}\n{{\n}}"
+
+        select_statement = select_match.group(1)
+        # create a dict to hold the column names and types
+        columns = {}
+
+        # separate the columns by comma
+        columns_list = select_statement.split(",")
+        # process the column line and add to the columns dict
+        # examples of column lines:
+        # vwAlertLocalTime.acknowledged_by AS acknowledged_by_user_id
+        # tblAlertState.alert_state_description
+        # COALESCE(tblLocation.location_desc, '-- No mapped location --') AS location_desc
+
+        for column_line in columns_list:
+            column_name, column_type = self.extract_column_name_and_type(
+                column_line)
+
+            columns[column_name] = column_type
+
+        # create the class definition
+        class_definition = []
+
+        for column_name, column_type in columns.items():
+            class_definition.append(
+                f"public {column_type} {SPUtils.snake_case_to_pascal_case(column_name)} {{ get; init; }}")
+
+        class_definition_str = "\n    ".join(class_definition)
+        class_definition = f"\npublic class {return_type_name}\n{{\n    {class_definition_str}\n}}\n"
+
+        return class_definition
+
+    def get_csharp_type(self, column_name: str) -> str:
+        """
+        Generates the C# type based on naming conventions.
+        """
+        # Convert to lowercase for case-insensitive matching
+        lower_column_name = column_name.lower()
+
+        if 'id' in lower_column_name:
+            return 'int'
+        elif lower_column_name.startswith('is_'):
+            return 'bool'
+        elif lower_column_name in ('created_at', 'updated_at'):
+            return 'DateTime'
         else:
-            return None
+            return 'string'
+
+    def extract_column_name_and_type(self, column_line: str) -> tuple[str, str]:
+        """
+        Extracts the column name and type from a column line.
+        Example:
+        column_line: vwAlertLocalTime.acknowledged_by AS acknowledged_by_user_id or
+        column_line: tblAlertState.alert_state_description or
+        column_line: COALESCE(tblLocation.location_desc, '-- No mapped location --') AS location_desc
+        will return: (acknowledged_by_user_id, int)
+        """
+        # remove leading and trailing spaces
+        column_line = column_line.strip()
+
+        # Check if there is an alias (AS) and split accordingly
+        if ' AS ' in column_line:
+            column_parts = column_line.split(' AS ')
+            column_name = column_parts[-1]
+        else:
+            parts = column_line.split('.')
+            column_name = parts[-1].strip()
+
+        # Use the get_csharp_type function to determine the C# type
+        column_type = self.get_csharp_type(column_name)
+
+        return column_name, column_type
 
     def get_command_return_type_class_definition(self) -> str:
         """
