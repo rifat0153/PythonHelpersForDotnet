@@ -112,4 +112,5 @@ root_namespace = 'Webmonitor'
 # dapper_generator.generate(sp_folder, root_namespace)
 
 dapper_file_generator = DapperFileGenerator()
-dapper_file_generator.generate(sp_folder, root_namespace)
+output_folder_path = 'output'
+dapper_file_generator.generate(sp_folder, output_folder_path, root_namespace)

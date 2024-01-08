@@ -44,6 +44,15 @@ class SPUtils:
         return camel_case
 
     @staticmethod
+    def to_pascal_case(snake_case):
+        """
+            Converts a string from snake or camel case to PascalCase.
+        """
+        camel_case = ''.join(
+            x.capitalize() or '_' for x in snake_case.split('_'))
+        return camel_case
+
+    @staticmethod
     def str_to_csharp_type(type: str):
         """
             Converts a string to a C# type

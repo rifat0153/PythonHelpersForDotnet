@@ -39,6 +39,10 @@ class DapperGenerator:
         request_class = self.generate_request_class()
         handler_class = self.generate_handler_class()
 
+        # add the namespace to the classes. use file scope namespace
+        request_class = f"namespace {namespace};\n\n{request_class}"
+        handler_class = f"namespace {namespace};\n\n{handler_class}"
+
         # Write the classes to files in the appropriate folders
         request_file_path = os.path.join(
             sp_folder_path, f"{self.sp_name}_Request.cs")
