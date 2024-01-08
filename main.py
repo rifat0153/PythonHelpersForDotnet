@@ -1,3 +1,4 @@
+from dapper.dapper_file_generator import DapperFileGenerator
 from dapper.dapper_generator import DapperGenerator
 from dapper.dapper_return_type_generator import DapperReturnTypeGenerator
 
@@ -100,8 +101,15 @@ GO
 dapper_generator = DapperGenerator(sp_query1)
 # dapper_generator = DapperGenerator(sp_command)
 
-request_class = dapper_generator.generate_request_class()
-print(request_class)
+# request_class = dapper_generator.generate_request_class()
+# print(request_class)
+# handler_class = dapper_generator.generate_handler_class()
+# print(handler_class)
 
-handler_class = dapper_generator.generate_handler_class()
-print(handler_class)
+sp_folder = 'sp'
+root_namespace = 'Webmonitor'
+
+# dapper_generator.generate(sp_folder, root_namespace)
+
+dapper_file_generator = DapperFileGenerator()
+dapper_file_generator.generate(sp_folder, root_namespace)
