@@ -46,7 +46,7 @@ class DapperHandlerGenerator:
         # if the return type is a Unit, then use dapper ExecuteAsync and return Unit.Value
         if request_return_type_name == "Unit":
             handler = handler + f"""
-            var command = new CommandDefinition(
+        var command = new CommandDefinition(
             "[dbo].[{self.sp.sp_name}]",
             parameters,
             commandType: CommandType.StoredProcedure,
@@ -86,7 +86,7 @@ class DapperHandlerGenerator:
             out_params_str = "\n".join(out_params)
 
             handler = handler + f"""
-            {out_params_str}
+        {out_params_str}
 
             """
 
@@ -95,7 +95,7 @@ class DapperHandlerGenerator:
 
             handler = handler + f"""
             return new {request_return_type_name}({", ".join([f"{param_value['pascal_case_name']}: {param_value['camel_case_name']}" for param_key, param_value in self.sp.sp_params_dict.items() if param_value['direction'] == 'OUT' or param_value['direction'] == 'INOUT'])});
-        }}
+    }}
 }}
             """
 

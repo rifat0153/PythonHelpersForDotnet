@@ -8,7 +8,7 @@ class DapperRequestGenerator:
         self.sp = sp
         self.return_type_generator = DapperReturnTypeGenerator(sp)
 
-    def generate(self) -> str:
+    def generate(self) -> [str, str]:
         """
             Generates the Dapper Request from the SP params dictionary.
             Example:
@@ -42,7 +42,7 @@ class DapperRequestGenerator:
         request = f"\npublic record {request_name} : IRequest<Result<{request_return_type_name}>>\n{{\n    {request_params_str}\n}}\n"
 
         # if SP has a return type, then add it to the request
-        if request_return_type_class:
-            request = request + "\n\n" + request_return_type_class + "\n\n"
+        # if request_return_type_class:
+        #     request = request + "\n\n" + request_return_type_class + "\n\n"
 
-        return request
+        return request, request_return_type_class
