@@ -6,6 +6,7 @@ __pycache__/
 # ignore the sp folder and output folder
 sp
 output
+sp_test
 
 # C extensions
 *.so

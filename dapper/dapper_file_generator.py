@@ -1,4 +1,5 @@
 import os
+import chardet
 from dapper.dapper_generator import DapperGenerator
 from dapper.sp_utils import SPUtils
 from dapper.dapper_handler_generator import DapperHandlerGenerator
@@ -16,8 +17,13 @@ class DapperFileGenerator:
         for file in files_sql:
             # read the contents of the file
             file_path = os.path.join(sp_folder_path, file)
-            with open(file_path, 'r') as file:
-                sp_text = file.read()
+
+            # Detect the encoding of the file
+            with open(file_path, 'rb') as file:
+                result = chardet.detect(file.read())
+
+            with open(file_path, 'r', encoding=result['encoding']) as file:
+                sp_text = file.read()   
                 dapper_generator = DapperGenerator(sp_text)
 
                 namespace = f"{root_namespace}.{sp_folder_path}"

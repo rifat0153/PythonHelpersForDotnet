@@ -98,7 +98,7 @@ GO
 
 
 # dapper_generator = DapperGenerator(sp_query)
-dapper_generator = DapperGenerator(sp_query1)
+# dapper_generator = DapperGenerator(sp_query1)
 # dapper_generator = DapperGenerator(sp_command)
 
 # request_class = dapper_generator.generate_request_class()
@@ -106,11 +106,11 @@ dapper_generator = DapperGenerator(sp_query1)
 # handler_class = dapper_generator.generate_handler_class()
 # print(handler_class)
 
-sp_folder = 'sp'
-root_namespace = 'Webmonitor'
+sp_folder = 'sp_test/sp_site'
+root_namespace = 'Webmonitor.Site'
 
 # dapper_generator.generate(sp_folder, root_namespace)
 
 dapper_file_generator = DapperFileGenerator()
-output_folder_path = 'output'
+output_folder_path = 'sp_test/sp_output'
 dapper_file_generator.generate(sp_folder, output_folder_path, root_namespace)
