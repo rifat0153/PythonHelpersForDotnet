@@ -23,7 +23,7 @@ class DapperFileGenerator:
                 result = chardet.detect(file.read())
 
             with open(file_path, 'r', encoding=result['encoding']) as file:
-                sp_text = file.read()   
+                sp_text = file.read()
                 dapper_generator = DapperGenerator(sp_text)
 
                 namespace = f"{root_namespace}.{sp_folder_path}"
@@ -32,9 +32,9 @@ class DapperFileGenerator:
 
                 # queries will be in a folder called queries and commands will be in a folder called commands
                 # the namespace will be root_namespace + SP_TYPE (query or command) + SP_NAME
-                sp_type = dapper_generator.sp_is_query and 'queries' or 'commands'
+                sp_type_folder_path = dapper_generator.sp_is_query and 'Queries' or 'Commands'
                 sp_name = dapper_generator.sp_name
-                namespace = f"{namespace}.{sp_type}.{sp_name}"
+                namespace = f"{namespace}.{sp_type_folder_path}.{sp_name}"
                 # split the namespace by dot and
                 # convert the namespace to pascal case
                 namespace = '.'.join(
@@ -48,18 +48,18 @@ class DapperFileGenerator:
                 handler_class = f"namespace {namespace};\n\n{handler_class}"
 
                 request_file_name = SPUtils.to_pascal_case(
-                    f"{sp_name}_Request.cs")
+                    f"{sp_name}_{dapper_generator.sp_type}.cs")
                 return_file_name = SPUtils.to_pascal_case(
                     f"{sp_name}_Result.cs")
                 handler_file_name = SPUtils.to_pascal_case(
                     f"{sp_name}_Handler.cs")
                 # PascalCase the file names
                 request_folder_path = os.path.join(
-                    output_folder_path, sp_type, sp_name_pascal_case, request_file_name)
+                    output_folder_path, sp_type_folder_path, sp_name_pascal_case, request_file_name)
                 return_folder_path = os.path.join(
-                    output_folder_path, sp_type, sp_name_pascal_case, return_file_name)
+                    output_folder_path, sp_type_folder_path, sp_name_pascal_case, return_file_name)
                 handler_folder_path = os.path.join(
-                    output_folder_path, sp_type, sp_name_pascal_case, handler_file_name)
+                    output_folder_path, sp_type_folder_path, sp_name_pascal_case, handler_file_name)
 
                 os.makedirs(os.path.dirname(
                     request_folder_path), exist_ok=True)

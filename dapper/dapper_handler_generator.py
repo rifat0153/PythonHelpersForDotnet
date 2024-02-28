@@ -10,6 +10,10 @@ class DapperHandlerGenerator:
         self.sp = sp
         self.return_type_generator = DapperReturnTypeGenerator(sp)
 
+        # IQueryHandler or ICommandHandler
+        self.handler_name_type_name = sp.get_sp_type(
+        ) == 'query' and 'IQueryHandler' or 'ICommandHandler'
+
     # strongly type the params_dict
 
     def generate(self) -> str:
@@ -32,7 +36,7 @@ class DapperHandlerGenerator:
         request_return_type_name, request_return_type_class = self.return_type_generator.generate_return_type()
 
         handler = f"""internal sealed class {handler_name}(ISqlConnectionFactory sqlConnectionFactory)
-    : IRequestHandler<{self.sp.request_class_name()}, Result<{request_return_type_name}>>
+    : {self.handler_name_type_name}<{self.sp.request_class_name()}, Result<{request_return_type_name}>>
 {{
 
     public async Task<Result<{request_return_type_name}>> Handle({self.sp.request_class_name()} request, CancellationToken cancellationToken)
@@ -114,7 +118,7 @@ class DapperHandlerGenerator:
         request_return_type_name, request_return_type_class = self.return_type_generator.generate_return_type()
 
         handler = f"""internal sealed class {handler_name}(ISqlConnectionFactory sqlConnectionFactory)
-    : IRequestHandler<{self.sp.request_class_name()}, Result<{request_return_type_name}>>
+    : {self.handler_name_type_name}<{self.sp.request_class_name()}, Result<{request_return_type_name}>>
 {{
 
     public async Task<Result<{request_return_type_name}>> Handle({self.sp.request_class_name()} request, CancellationToken cancellationToken)

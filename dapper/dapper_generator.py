@@ -13,7 +13,9 @@ class DapperGenerator:
 
         sp = StoredProcedure(sp_text)
 
+        self.sp = sp
         self.sp_definition = sp.sp_definition
+        self.sp_type = sp.get_sp_type()
         self.sp_name = sp.sp_name
         self.sp_params_dict = sp.sp_params_dict
         self.sp_is_query = sp.get_sp_type() == 'query'

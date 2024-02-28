@@ -39,7 +39,10 @@ class DapperRequestGenerator:
                     f"public {param_value['csharp_type']} {param_value['pascal_case_name']} {{ get; init; }}")
 
         request_params_str = "\n    ".join(request_params)
-        request = f"\npublic record {request_name} : IRequest<Result<{request_return_type_name}>>\n{{\n    {request_params_str}\n}}\n"
+        # ICommand or IQuery depending on the SP type
+        interface_type = self.sp.get_sp_type() == 'query' and "IQuery" or "ICommand"
+
+        request = f"\npublic record {request_name} : {interface_type}<Result<{request_return_type_name}>>\n{{\n    {request_params_str}\n}}\n"
 
         # if SP has a return type, then add it to the request
         # if request_return_type_class:
